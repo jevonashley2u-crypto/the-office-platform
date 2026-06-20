@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empire Dashboard | Silverfoxx2u</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Background Elements -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>Empire <span>Dashboard</span></h1>
+                <p>Autonomous AI System Monitor (Silverfoxx2u & Build Catalyst)</p>
+            </div>
+            <div class="agent-status">
+                <div class="status-dot"></div>
+                <span>All 6 Agents Online</span>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+            <!-- Cross-Division Insights -->
+            <section class="card widget-insights">
+                <div class="card-header">
+                    <h2>🧠 Cross-Division Intelligence</h2>
+                    <span class="badge">insight-agent</span>
+                </div>
+                <div class="card-body" id="insights-container">
+                    <div class="loading">Fetching AI insights...</div>
+                </div>
+            </section>
+
+            <!-- Content Calendar -->
+            <section class="card widget-content">
+                <div class="card-header">
+                    <h2>📱 Viral Content Pipeline</h2>
+                    <span class="badge">social-agent</span>
+                </div>
+                <div class="card-body" id="content-container">
+                    <div class="loading">Loading content calendar...</div>
+                </div>
+            </section>
+
+            <!-- Agent Activity Log -->
+            <section class="card widget-agents">
+                <div class="card-header">
+                    <h2>🤖 Agent Activity Log</h2>
+                    <span class="badge">system</span>
+                </div>
+                <div class="card-body" id="agents-container">
+                    <div class="loading">Monitoring agents...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
