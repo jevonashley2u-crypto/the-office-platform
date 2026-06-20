@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Catalyst — AI Business Audit</title>
+    <meta name="description" content="Get your free AI-powered business audit. Discover automation opportunities and see where you can scale your operations.">
+    <meta property="og:title" content="Build Catalyst — AI Business Audit">
+    <meta property="og:description" content="See where you can automate & scale your business with AI-powered analysis.">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Animated Background -->
+    <div class="bg-effects" aria-hidden="true">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+    <canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+    <!-- Header -->
+    <header id="site-header">
+        <div class="header-inner">
+            <a href="#" class="logo" id="logo-link">
+                <div class="logo-icon" aria-hidden="true">⚡</div>
+                <span class="logo-text">Build Catalyst</span>
+            </a>
+            <div class="header-badge">
+                <span class="badge-dot"></span>
+                AI-Powered
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- ===== FORM VIEW ===== -->
+        <section id="form-section" class="view active">
+            <div class="hero-text">
+                <div class="hero-badge">
+                    <span>✦</span> Free Business Analysis
+                </div>
+                <h1>Get Your AI Business Audit</h1>
+                <p class="subtitle">See where you can automate &amp; scale</p>
+            </div>
+
+            <div class="form-card glass">
+                <form id="audit-form" novalidate>
+                    <!-- Business Name -->
+                    <div class="form-group" id="group-business-name">
+                        <input type="text" id="business-name" name="businessName" required autocomplete="organization" placeholder=" ">
+                        <label for="business-name">Business Name</label>
+                        <div class="input-glow"></div>
+                    </div>
+
+                    <!-- Industry + Revenue Row -->
+                    <div class="form-row">
+                        <div class="form-group" id="group-industry">
+                            <select id="industry" name="industry" required>
+                                <option value="" disabled selected hidden>Select industry</option>
+                                <option value="B2B SaaS">B2B SaaS</option>
+                                <option value="E-Commerce">E-Commerce</option>
+                                <option value="Real Estate">Real Estate</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Hospitality/Retail">Hospitality/Retail</option>
+                                <option value="Professional Services">Professional Services</option>
+                                <option value="Manufacturing">Manufacturing</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <label for="industry">Industry</label>
+                            <div class="select-chevron" aria-hidden="true">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="group-revenue">
+                            <select id="revenue" name="revenue" required>
+                                <option value="" disabled selected hidden>Select range</option>
+                                <option value="$50K - $250K">$50K – $250K</option>
+                                <option value="$250K - $1M">$250K – $1M</option>
+                                <option value="$1M - $5M">$1M – $5M</option>
+                                <option value="$5M+">$5M+</option>
+                            </select>
+                            <label for="revenue">Annual Revenue</label>
+                            <div class="select-chevron" aria-hidden="true">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Size -->
+                    <div class="form-group" id="group-team-size">
+                        <input type="number" id="team-size" name="teamSize" required min="1" placeholder=" ">
+                        <label for="team-size">Team Size</label>
+                        <div class="input-glow"></div>
+                    </div>
+
+                    <!-- Pain Points -->
+                    <div class="form-group" id="group-pain-points">
+                        <textarea id="pain-points" name="painPoints" required rows="4" placeholder=" "></textarea>
+                        <label for="pain-points">Main Pain Points</label>
+                        <div class="input-glow"></div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group" id="group-email">
+                        <input type="email" id="email" name="email" required autocomplete="email" placeholder=" ">
+                        <label for="email">Email Address</label>
+                        <div class="input-glow"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submit-btn" class="btn-primary" disabled>
+                        <span class="btn-content">
+                            <span class="btn-text">Analyze My Business</span>
+                            <span class="btn-arrow" aria-hidden="true">→</span>
+                        </span>
+                        <span class="btn-loader" aria-hidden="true">
+                            <span class="spinner"></span>
+                            <span>Analyzing…</span>
+                        </span>
+                        <span class="btn-glow" aria-hidden="true"></span>
+                    </button>
+
+                    <p class="form-disclaimer">🔒 Your data is encrypted and never shared with third parties.</p>
+                </form>
+            </div>
+        </section>
+
+        <!-- ===== LOADING VIEW ===== -->
+        <section id="loading-section" class="view">
+            <div class="loading-container">
+                <div class="loading-spinner" aria-hidden="true">
+                    <div class="spinner-ring-outer"></div>
+                    <div class="spinner-ring-inner"></div>
+                    <div class="spinner-icon">⚡</div>
+                </div>
+                <h2 class="loading-text">Analyzing your business...</h2>
+                <p class="loading-subtext">This takes ~30 seconds</p>
+            </div>
+        </section>
+
+        <!-- ===== RESULTS VIEW ===== -->
+        <section id="results-section" class="view">
+            <div class="results-header">
+                <p class="results-company" id="results-company-name"></p>
+                <h2>Your Automation Opportunities</h2>
+            </div>
+
+            <div class="results-grid">
+                <!-- Executive Summary -->
+                <div class="result-card glass summary-card" id="card-summary">
+                    <p class="large-summary-text" id="summary-text"></p>
+                </div>
+
+                <!-- Opportunities Section -->
+                <div class="opportunities-wrapper" id="opportunities-list">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <div class="results-cta-group">
+                <button class="btn-secondary" id="btn-download-pdf">
+                    <span class="btn-icon">📄</span> Download as PDF
+                </button>
+                <a href="https://calendly.com/" target="_blank" class="btn-primary" id="btn-schedule">
+                    <span class="btn-content">
+                        <span class="btn-icon">📅</span> 
+                        <span class="btn-text">Schedule Free Consultation</span>
+                    </span>
+                    <span class="btn-glow" aria-hidden="true"></span>
+                </a>
+                <button class="btn-secondary" id="btn-email-report">
+                    <span class="btn-icon">✉️</span> Email Me This Report
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer id="site-footer">
+        <div class="footer-inner">
+            <p class="footer-logo"><strong>Build Catalyst</strong></p>
+            <p class="footer-sub"><a href="mailto:support@buildcatalyst.ai">Questions? Contact us</a></p>
+        </div>
+    </footer>
+
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Application -->
+    <script src="app.js"></script>
+</body>
+</html>
