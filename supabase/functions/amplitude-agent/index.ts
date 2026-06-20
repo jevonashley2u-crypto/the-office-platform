@@ -21,8 +21,7 @@ Deno.cron("Amplitude Agent Execution", "0 13 * * *", async () => {
       total_streams_24h: 5500,
       total_listeners_24h: 1200,
       spotify: { streams: 2400 },
-      apple: { streams: 1800 },
-      youtube: { streams: 900 },
+      youtube: { views: 3100 },
       tiktok: { plays: 12000 }
     };
 
