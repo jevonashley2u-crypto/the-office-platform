@@ -3,21 +3,72 @@
 // This enables autocomplete, go to definition, etc.
 
 // Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts"
+import { createClient } from "npm:@supabase/supabase-js@2";
 
-console.log("Hello from Functions!")
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
 
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Daily at 8:00 AM EST (13:00 UTC)
+Deno.cron("Amplitude Agent Execution", "0 13 * * *", async () => {
+  console.log("Running Amplitude Agent Execution for Silverfoxx2u");
+
+  try {
+    // 1. Fetch unified data (Placeholder)
+    const mockUnifiedData = {
+      total_streams_24h: 5500,
+      total_listeners_24h: 1200,
+      spotify: { streams: 2400 },
+      apple: { streams: 1800 },
+      youtube: { streams: 900 },
+      tiktok: { plays: 12000 }
+    };
+
+    // 2. Call OpenAI
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openaiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are the Analytics & Intelligence Agent for Silverfoxx2u's music career.
+Your role: Real-time performance tracking, trend detection, predictive insights.
+Return strict JSON format as specified in the blueprint.`
+          },
+          {
+            role: "user",
+            content: `Here is the last 24h unified data for Silverfoxx2u: ${JSON.stringify(mockUnifiedData)}`
+          }
+        ],
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    const aiData = await response.json();
+    const insights = JSON.parse(aiData.choices[0].message.content);
+    console.log("Generated Amplitude Insights:", insights);
+
+    // 3. Log agent execution
+    await supabase.from("agents").upsert({
+      agent_name: "Amplitude Agent",
+      division: "Music Marketing",
+      artist_name: "silverfoxx2u",
+      role: "Analytics & Intelligence",
+      last_run: new Date().toISOString()
+    }, { onConflict: 'agent_name' });
+
+    console.log("Amplitude Agent Execution completed successfully.");
+  } catch (error) {
+    console.error("Error running Amplitude Agent:", error);
   }
-
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
+});
 
 /* To invoke locally:
 
