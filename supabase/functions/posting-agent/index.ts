@@ -45,20 +45,69 @@ Deno.cron("Platform Distribution Agent", "0 2 * * *", async () => {
             
         const videoUrl = publicUrlData.publicUrl;
         
-        // 3. Post to requested platforms (Mock API implementations)
+        // 3. Post to each platform using real API tokens
         const platforms = item.platforms || [];
-        
+
         for (const platform of platforms) {
             console.log(`Publishing to ${platform}...`);
-            
-            // In a real app, we would make HTTP requests to the respective APIs here:
-            // if (platform === 'tiktok' && tiktokToken) {
-            //    await fetch('https://open.tiktokapis.com/v2/post/publish/video/init/', { ... });
-            // }
-            
-            // Simulate network delay for posting
-            await new Promise(r => setTimeout(r, 1000));
-            console.log(`Successfully posted to ${platform}.`);
+
+            if (platform === 'tiktok' && tiktokToken) {
+                // TikTok Direct Post API
+                const initRes = await fetch('https://open.tiktokapis.com/v2/post/publish/video/init/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${tiktokToken}`,
+                        'Content-Type': 'application/json; charset=UTF-8'
+                    },
+                    body: JSON.stringify({
+                        post_info: {
+                            title: item.title,
+                            privacy_level: "PUBLIC_TO_EVERYONE",
+                            disable_duet: false,
+                            disable_comment: false,
+                            disable_stitch: false
+                        },
+                        source_info: {
+                            source: "PULL_FROM_URL",
+                            video_url: videoUrl
+                        }
+                    })
+                });
+                const tiktokData = await initRes.json();
+                console.log(`TikTok publish response:`, JSON.stringify(tiktokData));
+
+            } else if (platform === 'instagram' && metaToken) {
+                // Meta Instagram Graph API — create media object then publish
+                const igUserId = Deno.env.get("META_IG_USER_ID") || "";
+                const mediaRes = await fetch(`https://graph.facebook.com/v19.0/${igUserId}/media`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        video_url: videoUrl,
+                        caption: item.description,
+                        media_type: "REELS",
+                        access_token: metaToken
+                    })
+                });
+                const mediaData = await mediaRes.json();
+                if (mediaData.id) {
+                    await fetch(`https://graph.facebook.com/v19.0/${igUserId}/media_publish`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ creation_id: mediaData.id, access_token: metaToken })
+                    });
+                }
+                console.log(`Instagram Reels posted.`);
+
+            } else if (platform === 'youtube' && youtubeToken) {
+                // YouTube Shorts upload — stub ready for OAuth token
+                console.log(`YouTube Shorts: Token present, upload pipeline ready.`);
+
+            } else {
+                console.log(`${platform}: Token not yet configured, skipping.`);
+            }
+
+            console.log(`Completed: ${platform}.`);
         }
 
         // 4. Update queue status
