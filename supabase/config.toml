@@ -9,3 +9,25 @@ entrypoint = "./functions/youtube-agent/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/youtube-agent/*.html" ]
+
+[functions.clipping-agent]
+enabled = true
+verify_jwt = true
+import_map = "./functions/clipping-agent/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/clipping-agent/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/clipping-agent/*.html" ]
+
+[functions.posting-agent]
+enabled = true
+verify_jwt = true
+import_map = "./functions/posting-agent/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/posting-agent/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/posting-agent/*.html" ]

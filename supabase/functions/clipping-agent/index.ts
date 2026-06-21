@@ -1,0 +1,103 @@
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+// Setup type definitions for built-in Supabase Runtime APIs
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Daily at 6:00 AM EST (11:00 UTC)
+Deno.cron("Content Clipping Agent", "0 11 * * *", async () => {
+  console.log("Running Content Clipping & Editing Agent for Silverfoxx2u");
+
+  try {
+    // 1. Fetch unedited raw footage metadata from Supabase Storage
+    const { data: files, error: storageError } = await supabase.storage.from("raw_footage").list();
+    
+    let rawMaterialContext = "No specific raw footage found. Use general Silverfoxx2u B-roll and existing music library to generate concepts.";
+    let rawFilePath = "fallback_broll.mp4";
+
+    if (files && files.length > 0) {
+        // Pick the first unprocessed file (in reality you'd track processed ones)
+        const file = files.find(f => f.name.endsWith('.mp4'));
+        if (file) {
+            rawMaterialContext = `Found new raw footage: ${file.name}. It is unedited studio/lifestyle footage.`;
+            rawFilePath = file.name;
+        }
+    }
+
+    // 2. Call OpenAI to generate the JSON editing instructions
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openaiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are the Content Clipping & Editing Orchestrator for Silverfoxx2u.
+Your role: Transform raw studio footage, music, and clips into optimized short-form content.
+Output strictly JSON matching the blueprint.
+Generate 1 video concept for today based on the input.`
+          },
+          {
+            role: "user",
+            content: `Raw Material Input: ${rawMaterialContext}. Generate editing instructions, captions, and metadata.`
+          }
+        ],
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    const aiData = await response.json();
+    const insights = JSON.parse(aiData.choices[0].message.content);
+    console.log("Generated Clipping Instructions:", insights);
+
+    const videoConfig = insights.videos_generated ? insights.videos_generated[0] : insights;
+
+    // 3. Push to Video Queue for the Local Python Worker to pick up
+    await supabase.from("video_queue").insert({
+        concept: videoConfig.concept || "music_moment",
+        title: videoConfig.title || "Silverfoxx2u Raw Moment",
+        description: videoConfig.description || "New music out now.",
+        raw_file_path: rawFilePath,
+        status: "pending_render",
+        ai_metadata: videoConfig,
+        platforms: ["tiktok", "instagram", "youtube", "facebook"],
+        scheduled_post_time: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // Schedule for 8 hours from now
+    });
+
+    // 4. Log agent execution
+    await supabase.from("agents").upsert({
+      agent_name: "Content Clipping Agent",
+      division: "Music Marketing",
+      artist_name: "silverfoxx2u",
+      role: "Video Editing Orchestrator",
+      last_run: new Date().toISOString()
+    }, { onConflict: 'agent_name' });
+
+    console.log("Content Clipping Agent successfully queued the render instructions.");
+  } catch (error) {
+    console.error("Error running Clipping Agent:", error);
+  }
+});
+
+/* To invoke locally:
+
+  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
+  2. Make an HTTP request:
+
+  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/clipping-agent' \
+    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Functions"}'
+
+*/
