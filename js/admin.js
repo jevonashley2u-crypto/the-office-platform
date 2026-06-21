@@ -141,3 +141,72 @@ async function fetchRenderQueue() {
         `;
     }).join("");
 }
+
+// Chat Widget Logic
+document.addEventListener("DOMContentLoaded", () => {
+    const chatToggle = document.getElementById("chat-toggle-btn");
+    const chatHeader = document.getElementById("chat-header");
+    const chatWidget = document.getElementById("chat-widget");
+    const chatInput = document.getElementById("chat-input");
+    const chatSend = document.getElementById("chat-send-btn");
+    const chatMessages = document.getElementById("chat-messages");
+
+    function toggleChat() {
+        chatWidget.classList.toggle("collapsed");
+        chatToggle.innerText = chatWidget.classList.contains("collapsed") ? "▲" : "▼";
+    }
+
+    chatHeader.addEventListener("click", toggleChat);
+
+    async function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        // Add User Message
+        const userMsg = document.createElement("div");
+        userMsg.className = "message user";
+        userMsg.innerText = text;
+        chatMessages.appendChild(userMsg);
+        chatInput.value = "";
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Loading state
+        const loadingMsg = document.createElement("div");
+        loadingMsg.className = "message system";
+        loadingMsg.innerText = "Agent is thinking...";
+        chatMessages.appendChild(loadingMsg);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        try {
+            const { data, error } = await supabase.functions.invoke("chat-agent", {
+                body: { message: text }
+            });
+
+            chatMessages.removeChild(loadingMsg);
+
+            if (error) throw error;
+
+            const sysMsg = document.createElement("div");
+            sysMsg.className = "message system";
+            sysMsg.innerText = data.reply || "No response received.";
+            chatMessages.appendChild(sysMsg);
+        } catch (err) {
+            chatMessages.removeChild(loadingMsg);
+            const sysMsg = document.createElement("div");
+            sysMsg.className = "message system";
+            sysMsg.style.color = "#ef4444";
+            sysMsg.innerText = "Error contacting Lead Agent.";
+            chatMessages.appendChild(sysMsg);
+        }
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    chatSend.addEventListener("click", sendMessage);
+    chatInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+    });
+
+    // Start collapsed by default
+    chatWidget.classList.add("collapsed");
+    chatToggle.innerText = "▲";
+});
