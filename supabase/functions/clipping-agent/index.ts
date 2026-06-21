@@ -43,9 +43,14 @@ Deno.cron("Content Clipping Agent", "0 11 * * *", async () => {
         messages: [
           {
             role: "system",
-            content: `You are the Content Clipping & Editing Orchestrator for Silverfoxx2u.
-Your role: Transform raw studio footage, music, and clips into optimized short-form content.
-Output strictly JSON matching the blueprint.
+            content: `You are the Content Clipping & Editing Orchestrator for the Silverfoxx2u Empire.
+Dual-Entity Brand: Silverfoxx2u (R&B/Soul Music) & Build Catalyst (AI Automation Consulting).
+Your role: Transform raw footage into optimized short-form content. 
+There are TWO types of raw footage you will process:
+- Type A (Music): Studio footage, vocals, lifestyle.
+- Type B (Tech): Screen recordings of code, AI workflows, business consulting advice.
+Determine the brand based on the raw footage provided, and generate editing instructions, captions, and concepts that match.
+Output strictly JSON matching the blueprint. Include a "brand" property ("Music" or "Tech").
 Generate 1 video concept for today based on the input.`
           },
           {

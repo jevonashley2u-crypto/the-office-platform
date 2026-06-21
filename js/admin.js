@@ -55,14 +55,20 @@ async function fetchContentCalendar() {
         return;
     }
 
-    container.innerHTML = data.map(item => `
+    container.innerHTML = data.map(item => {
+        const brandBadge = item.brand === 'Tech' 
+            ? `<span style="background: rgba(0,210,255,0.2); color: #00d2ff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px;">💻 Tech</span>`
+            : `<span style="background: rgba(138,43,226,0.2); color: #e2b3ff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px;">🎵 Music</span>`;
+
+        return `
         <div class="content-item">
-            <span class="platform-tag">${item.platform.toUpperCase()}</span>
+            <span class="platform-tag">${item.platform.toUpperCase()} ${brandBadge}</span>
             <strong>${item.content_type.replace('_', ' ').toUpperCase()}</strong>
             <p>${item.description}</p>
             <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #94a3b8;">Status: ${item.status}</div>
         </div>
-    `).join("");
+        `;
+    }).join("");
 }
 
 async function fetchAgents() {
