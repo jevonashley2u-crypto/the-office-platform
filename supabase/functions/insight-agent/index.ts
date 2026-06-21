@@ -9,30 +9,19 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
 
-// Twilio SMS
-const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-const twilioAuth = Deno.env.get("TWILIO_AUTH_TOKEN");
-const twilioFrom = Deno.env.get("TWILIO_FROM_NUMBER");
-const myPhone = Deno.env.get("MY_PHONE_NUMBER");
+// Telegram Bot
+const telegramToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
+const telegramChatId = Deno.env.get("TELEGRAM_CHAT_ID");
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function sendSMS(body: string) {
-    if (!twilioSid || !twilioAuth || !twilioFrom || !myPhone) return;
-    
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
-    const formData = new URLSearchParams();
-    formData.append("To", myPhone);
-    formData.append("From", twilioFrom);
-    formData.append("Body", body);
+async function sendTelegram(text: string) {
+    if (!telegramToken || !telegramChatId) return;
 
-    await fetch(url, {
+    await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
         method: "POST",
-        headers: {
-            "Authorization": "Basic " + btoa(`${twilioSid}:${twilioAuth}`),
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: formData.toString()
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: telegramChatId, text, parse_mode: "HTML" })
     });
 }
 
@@ -98,14 +87,13 @@ Return strict JSON format as specified in the blueprint.`
       }
     }
 
-    // 4. Send Daily SMS Report to Jevon
+    // 4. Send Daily Telegram Report to Jevon
     const reportMessage = `📊 Silverfoxx2u Empire Daily Report:
-Music: ${mockMetricsData.music.streams} streams.
-Tech: ${mockMetricsData.tech.leads_generated} leads.
-Insight: ${insights.impacts[0]?.insight_extracted || 'All systems normal.'}
+Music: ${mockInsightData.music_insights_extracted} insights.
+Insight: ${insights.build_catalyst_recommendations?.[0]?.insight || 'All systems normal.'}
 - Agent 6 (Insights)`;
 
-    await sendSMS(reportMessage);
+    await sendTelegram(reportMessage);
 
     console.log("Insight Agent Execution completed successfully.");
   } catch (error) {

@@ -9,30 +9,19 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
 
-// Twilio SMS
-const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-const twilioAuth = Deno.env.get("TWILIO_AUTH_TOKEN");
-const twilioFrom = Deno.env.get("TWILIO_FROM_NUMBER");
-const myPhone = Deno.env.get("MY_PHONE_NUMBER");
+// Telegram Bot
+const telegramToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
+const telegramChatId = Deno.env.get("TELEGRAM_CHAT_ID");
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function sendSMS(body: string) {
-    if (!twilioSid || !twilioAuth || !twilioFrom || !myPhone) return;
-    
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
-    const formData = new URLSearchParams();
-    formData.append("To", myPhone);
-    formData.append("From", twilioFrom);
-    formData.append("Body", body);
+async function sendTelegram(text: string) {
+    if (!telegramToken || !telegramChatId) return;
 
-    await fetch(url, {
+    await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
         method: "POST",
-        headers: {
-            "Authorization": "Basic " + btoa(`${twilioSid}:${twilioAuth}`),
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: formData.toString()
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: telegramChatId, text, parse_mode: "HTML" })
     });
 }
 
@@ -116,9 +105,9 @@ Generate 1 video concept for today based on the input.`
       last_run: new Date().toISOString()
     }, { onConflict: 'agent_name' });
 
-    // 5. Send SMS alert for approval
+    // 5. Send Telegram alert for approval
     const brand = videoConfig.brand || "Silverfoxx2u Empire";
-    await sendSMS(`🤖 Agent 7: New ${brand} video generated ("${videoConfig.title}"). Reply "YES ${queueId}" to approve and render.`);
+    await sendTelegram(`🤖 Agent 7: New ${brand} video generated ("${videoConfig.title}"). Reply "YES ${queueId}" to approve and render.`);
 
     console.log("Content Clipping Agent successfully queued the render instructions.");
   } catch (error) {
