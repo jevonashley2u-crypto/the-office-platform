@@ -11,8 +11,8 @@ const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Daily at 8:00 AM EST (13:00 UTC)
-Deno.cron("Amplitude Agent Execution", "0 13 * * *", async () => {
+// Daily at 8:15 PM Local (01:15 UTC)
+Deno.cron("Amplitude Agent Execution", "15 1 * * *", async () => {
   console.log("Running Amplitude Agent Execution for Silverfoxx2u");
 
   try {

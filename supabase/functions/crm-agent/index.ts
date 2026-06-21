@@ -11,8 +11,8 @@ const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Daily at 5:00 PM EST (22:00 UTC)
-Deno.cron("CRM Agent Execution", "0 22 * * *", async () => {
+// Daily at 8:00 PM Local (01:00 UTC)
+Deno.cron("CRM Agent Execution", "0 1 * * *", async () => {
   console.log("Running CRM Agent Execution for Silverfoxx2u");
 
   try {

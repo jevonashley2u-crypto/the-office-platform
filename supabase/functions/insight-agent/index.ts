@@ -9,10 +9,35 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
 
+// Twilio SMS
+const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+const twilioAuth = Deno.env.get("TWILIO_AUTH_TOKEN");
+const twilioFrom = Deno.env.get("TWILIO_FROM_NUMBER");
+const myPhone = Deno.env.get("MY_PHONE_NUMBER");
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Daily at 10:00 AM EST (15:00 UTC)
-Deno.cron("Insight Agent Execution", "0 15 * * *", async () => {
+async function sendSMS(body: string) {
+    if (!twilioSid || !twilioAuth || !twilioFrom || !myPhone) return;
+    
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
+    const formData = new URLSearchParams();
+    formData.append("To", myPhone);
+    formData.append("From", twilioFrom);
+    formData.append("Body", body);
+
+    await fetch(url, {
+        method: "POST",
+        headers: {
+            "Authorization": "Basic " + btoa(`${twilioSid}:${twilioAuth}`),
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: formData.toString()
+    });
+}
+
+// Daily at 9:00 PM Local (02:00 UTC)
+Deno.cron("Cross-Division Insight Agent", "0 2 * * *", async () => {
   console.log("Running Insight Agent Execution for Build Catalyst");
 
   try {
@@ -72,6 +97,15 @@ Return strict JSON format as specified in the blueprint.`
         });
       }
     }
+
+    // 4. Send Daily SMS Report to Jevon
+    const reportMessage = `📊 Silverfoxx2u Empire Daily Report:
+Music: ${mockMetricsData.music.streams} streams.
+Tech: ${mockMetricsData.tech.leads_generated} leads.
+Insight: ${insights.impacts[0]?.insight_extracted || 'All systems normal.'}
+- Agent 6 (Insights)`;
+
+    await sendSMS(reportMessage);
 
     console.log("Insight Agent Execution completed successfully.");
   } catch (error) {

@@ -14,8 +14,8 @@ const spotifyClientSecret = Deno.env.get("SPOTIFY_CLIENT_SECRET");
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Daily at 6:00 AM EST (11:00 UTC)
-Deno.cron("Spotify Agent Execution", "0 11 * * *", async () => {
+// Daily at 8:00 PM Local (01:00 UTC)
+Deno.cron("Spotify Agent Execution", "0 1 * * *", async () => {
   console.log("Running Spotify Agent Execution for Silverfoxx2u");
 
   try {

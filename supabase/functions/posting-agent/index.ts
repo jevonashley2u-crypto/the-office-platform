@@ -14,8 +14,8 @@ const youtubeToken = Deno.env.get("YOUTUBE_OAUTH_TOKEN");
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Runs every hour to check the queue
-Deno.cron("Platform Distribution Agent", "0 * * * *", async () => {
+// Runs at 9:00 PM Local (02:00 UTC)
+Deno.cron("Platform Distribution Agent", "0 2 * * *", async () => {
   console.log("Running Platform Distribution & Auto-Posting Agent");
 
   try {

@@ -9,10 +9,35 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
 
+// Twilio SMS
+const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+const twilioAuth = Deno.env.get("TWILIO_AUTH_TOKEN");
+const twilioFrom = Deno.env.get("TWILIO_FROM_NUMBER");
+const myPhone = Deno.env.get("MY_PHONE_NUMBER");
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Daily at 6:00 AM EST (11:00 UTC)
-Deno.cron("Content Clipping Agent", "0 11 * * *", async () => {
+async function sendSMS(body: string) {
+    if (!twilioSid || !twilioAuth || !twilioFrom || !myPhone) return;
+    
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
+    const formData = new URLSearchParams();
+    formData.append("To", myPhone);
+    formData.append("From", twilioFrom);
+    formData.append("Body", body);
+
+    await fetch(url, {
+        method: "POST",
+        headers: {
+            "Authorization": "Basic " + btoa(`${twilioSid}:${twilioAuth}`),
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: formData.toString()
+    });
+}
+
+// Daily at 8:45 PM Local (01:45 UTC)
+Deno.cron("Content Clipping Agent", "45 1 * * *", async () => {
   console.log("Running Content Clipping & Editing Agent for Silverfoxx2u");
 
   try {
@@ -68,17 +93,19 @@ Generate 1 video concept for today based on the input.`
 
     const videoConfig = insights.videos_generated ? insights.videos_generated[0] : insights;
 
-    // 3. Push to Video Queue for the Local Python Worker to pick up
-    await supabase.from("video_queue").insert({
+    // 3. Push to Video Queue
+    const { data: queueData, error: queueError } = await supabase.from("video_queue").insert({
         concept: videoConfig.concept || "music_moment",
         title: videoConfig.title || "Silverfoxx2u Raw Moment",
         description: videoConfig.description || "New music out now.",
         raw_file_path: rawFilePath,
-        status: "pending_render",
+        status: "pending_approval", // Wait for SMS reply
         ai_metadata: videoConfig,
         platforms: ["tiktok", "instagram", "youtube", "facebook"],
         scheduled_post_time: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // Schedule for 8 hours from now
-    });
+    }).select();
+
+    const queueId = queueData ? queueData[0].id : "unknown";
 
     // 4. Log agent execution
     await supabase.from("agents").upsert({
@@ -88,6 +115,10 @@ Generate 1 video concept for today based on the input.`
       role: "Video Editing Orchestrator",
       last_run: new Date().toISOString()
     }, { onConflict: 'agent_name' });
+
+    // 5. Send SMS alert for approval
+    const brand = videoConfig.brand || "Silverfoxx2u Empire";
+    await sendSMS(`🤖 Agent 7: New ${brand} video generated ("${videoConfig.title}"). Reply "YES ${queueId}" to approve and render.`);
 
     console.log("Content Clipping Agent successfully queued the render instructions.");
   } catch (error) {

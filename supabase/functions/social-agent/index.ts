@@ -11,8 +11,8 @@ const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Daily at 9:00 AM EST (14:00 UTC)
-Deno.cron("Social Agent Execution", "0 14 * * *", async () => {
+// Daily at 8:30 PM Local (01:30 UTC)
+Deno.cron("Social Agent Execution", "30 1 * * *", async () => {
   console.log("Running Social Agent Execution for Silverfoxx2u");
 
   try {
