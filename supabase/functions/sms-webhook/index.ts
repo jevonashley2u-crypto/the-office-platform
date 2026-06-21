@@ -27,60 +27,60 @@ Deno.serve(async (req) => {
 
   try {
     const update = await req.json();
-    const message = update?.message;
 
+    // ── Handle inline button taps (callback_query) ──────────────────
+    if (update?.callback_query) {
+      const cq = update.callback_query;
+      const fromId = cq?.from?.id;
+      const callbackId = cq?.id;
+      const data: string = cq?.data || "";
+
+      // Acknowledge the button tap immediately (removes loading spinner)
+      await fetch(`https://api.telegram.org/bot${telegramToken}/answerCallbackQuery`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callback_query_id: callbackId })
+      });
+
+      if (String(fromId) !== String(telegramChatId)) {
+        return new Response("Unauthorized", { status: 200 });
+      }
+
+      const [action, videoId] = data.split(":");
+
+      if (action === "YES" && videoId) {
+        const { error } = await supabase
+          .from("video_queue")
+          .update({ status: "pending_render" })
+          .eq("id", videoId)
+          .eq("status", "pending_approval");
+
+        if (error) {
+          await sendTelegram(`❌ Error approving video: ${error.message}`);
+        } else {
+          await sendTelegram(`✅ <b>Approved!</b> The render farm is now cutting the video. You'll get a notification when it's ready to post.`);
+        }
+      } else if (action === "NO" && videoId) {
+        await supabase.from("video_queue").update({ status: "rejected" }).eq("id", videoId);
+        await sendTelegram(`❌ <b>Cancelled.</b> Video has been removed from the queue.`);
+      }
+
+      return new Response("OK", { status: 200 });
+    }
+
+    // ── Handle plain text messages ───────────────────────────────────
+    const message = update?.message;
     if (!message) {
       return new Response("No message", { status: 200 });
     }
 
     const fromId = message?.from?.id;
-    const rawText: string = message?.text?.trim() || "";
-    const body = rawText.toUpperCase();
-
-    // Security check: Only accept commands from Jevon's Telegram account
     if (String(fromId) !== String(telegramChatId)) {
-      console.warn(`Unauthorized Telegram message from chat ID: ${fromId}`);
-      return new Response("Unauthorized", { status: 200 }); // Return 200 to Telegram regardless
+      return new Response("Unauthorized", { status: 200 });
     }
 
-    // Command: YES <uuid>
-    if (body.startsWith("YES")) {
-      const parts = rawText.split(" ");
-      if (parts.length < 2) {
-        await sendTelegram("⚠️ Error: Please reply with <b>YES</b> followed by the video ID.");
-        return new Response("Missing ID", { status: 200 });
-      }
-
-      const videoId = parts[1];
-
-      const { error } = await supabase
-        .from("video_queue")
-        .update({ status: "pending_render" })
-        .eq("id", videoId)
-        .eq("status", "pending_approval");
-
-      if (error) {
-        await sendTelegram(`❌ Error approving video: ${error.message}`);
-      } else {
-        await sendTelegram(`✅ Video <code>${videoId}</code> approved! The render farm has been engaged.`);
-      }
-    }
-    // Command: NO <uuid>
-    else if (body.startsWith("NO")) {
-      const parts = rawText.split(" ");
-      if (parts.length > 1) {
-        const videoId = parts[1];
-        await supabase
-          .from("video_queue")
-          .update({ status: "rejected" })
-          .eq("id", videoId);
-        await sendTelegram(`❌ Video <code>${videoId}</code> rejected and cancelled.`);
-      } else {
-        await sendTelegram("❌ Video generation cancelled.");
-      }
-    } else {
-      await sendTelegram("🤖 Unknown command. Reply <b>YES &lt;uuid&gt;</b> to approve or <b>NO &lt;uuid&gt;</b> to reject.");
-    }
+    // Friendly help response for any text
+    await sendTelegram("🤖 <b>Empire Agent Online.</b>\n\nUse the buttons in the approval messages to approve or cancel videos. Check your Empire Dashboard for full system status.");
 
     return new Response("OK", { status: 200 });
   } catch (err) {

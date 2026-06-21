@@ -17,11 +17,29 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function sendTelegram(text: string) {
     if (!telegramToken || !telegramChatId) return;
-
     await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: telegramChatId, text, parse_mode: "HTML" })
+    });
+}
+
+async function sendTelegramWithButtons(text: string, videoId: string) {
+    if (!telegramToken || !telegramChatId) return;
+    await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            chat_id: telegramChatId,
+            text,
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [[
+                    { text: "✅ YES — Approve & Render", callback_data: `YES:${videoId}` },
+                    { text: "❌ NO — Cancel", callback_data: `NO:${videoId}` }
+                ]]
+            }
+        })
     });
 }
 
@@ -105,9 +123,25 @@ Generate 1 video concept for today based on the input.`
       last_run: new Date().toISOString()
     }, { onConflict: 'agent_name' });
 
-    // 5. Send Telegram alert for approval
+    // 5. Send Telegram alert with full details + tap buttons
     const brand = videoConfig.brand || "Silverfoxx2u Empire";
-    await sendTelegram(`🤖 Agent 7: New ${brand} video generated ("${videoConfig.title}"). Reply "YES ${queueId}" to approve and render.`);
+    const platforms = ["tiktok", "youtube"].join(", ").toUpperCase();
+    const scheduledTime = new Date(Date.now() + 8 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const approvalMessage = `🤖 <b>Agent 7 — Video Approval Needed</b>
+
+━━━━━━━━━━━━━━━━━━
+📹 <b>Title:</b> ${videoConfig.title || "Untitled"}
+🎯 <b>Brand:</b> ${brand}
+📝 <b>Concept:</b> ${videoConfig.concept || "N/A"}
+💬 <b>Caption:</b> ${videoConfig.description || videoConfig.caption || "Auto-generated"}
+🕐 <b>Scheduled:</b> ${scheduledTime}
+📲 <b>Platforms:</b> ${platforms}
+━━━━━━━━━━━━━━━━━━
+
+Tap ✅ to approve and start rendering, or ❌ to cancel.`;
+
+    await sendTelegramWithButtons(approvalMessage, queueId);
 
     console.log("Content Clipping Agent successfully queued the render instructions.");
   } catch (error) {
