@@ -6,6 +6,7 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 document.addEventListener("DOMContentLoaded", () => {
     fetchInsights();
     fetchContentCalendar();
+    fetchRenderQueue();
     fetchAgents();
 });
 
@@ -99,6 +100,44 @@ async function fetchAgents() {
                 </div>
                 <div class="agent-time">Last ran: ${timeString}</div>
             </div>
+        `;
+    }).join("");
+}
+
+async function fetchRenderQueue() {
+    const container = document.getElementById("render-container");
+    if (!container) return;
+    
+    const { data, error } = await supabase
+        .from('video_queue')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+    if (error) {
+        container.innerHTML = `<div class="loading" style="color: #ef4444;">Error: ${error.message}</div>`;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        container.innerHTML = `<div class="loading">No videos in the render queue.</div>`;
+        return;
+    }
+
+    container.innerHTML = data.map(item => {
+        let statusColor = "#94a3b8";
+        if (item.status === 'pending_approval') statusColor = "#eab308"; // yellow
+        if (item.status === 'pending_render') statusColor = "#f97316";   // orange
+        if (item.status === 'ready_to_post') statusColor = "#22c55e";    // green
+        if (item.status === 'posted') statusColor = "#3b82f6";           // blue
+        if (item.status === 'failed') statusColor = "#ef4444";           // red
+
+        return `
+        <div class="content-item" style="border-left: 3px solid ${statusColor}; margin-bottom: 0.75rem; padding-left: 1rem;">
+            <span class="platform-tag" style="background: ${statusColor}22; color: ${statusColor}; font-weight: bold; border: 1px solid ${statusColor}55;">${item.status.replace('_', ' ').toUpperCase()}</span>
+            <strong style="display: block; margin-top: 0.5rem; font-size: 1rem;">${item.title}</strong>
+            <p style="margin: 0.25rem 0 0 0; color: #94a3b8;">${item.description || item.concept}</p>
+        </div>
         `;
     }).join("");
 }
