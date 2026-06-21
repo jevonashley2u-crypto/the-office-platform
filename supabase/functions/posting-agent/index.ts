@@ -7,9 +7,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-// Mock API keys for Social Platforms (would be pulled from env in production)
+// Platform API Keys
 const tiktokToken = Deno.env.get("TIKTOK_ACCESS_TOKEN");
-const metaToken = Deno.env.get("META_ACCESS_TOKEN");
 const youtubeToken = Deno.env.get("YOUTUBE_OAUTH_TOKEN");
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -75,29 +74,6 @@ Deno.cron("Platform Distribution Agent", "0 2 * * *", async () => {
                 });
                 const tiktokData = await initRes.json();
                 console.log(`TikTok publish response:`, JSON.stringify(tiktokData));
-
-            } else if (platform === 'instagram' && metaToken) {
-                // Meta Instagram Graph API — create media object then publish
-                const igUserId = Deno.env.get("META_IG_USER_ID") || "";
-                const mediaRes = await fetch(`https://graph.facebook.com/v19.0/${igUserId}/media`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        video_url: videoUrl,
-                        caption: item.description,
-                        media_type: "REELS",
-                        access_token: metaToken
-                    })
-                });
-                const mediaData = await mediaRes.json();
-                if (mediaData.id) {
-                    await fetch(`https://graph.facebook.com/v19.0/${igUserId}/media_publish`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ creation_id: mediaData.id, access_token: metaToken })
-                    });
-                }
-                console.log(`Instagram Reels posted.`);
 
             } else if (platform === 'youtube' && youtubeToken) {
                 // YouTube Shorts upload — stub ready for OAuth token

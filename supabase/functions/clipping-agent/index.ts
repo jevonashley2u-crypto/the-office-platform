@@ -101,7 +101,7 @@ Generate 1 video concept for today based on the input.`
         raw_file_path: rawFilePath,
         status: "pending_approval", // Wait for SMS reply
         ai_metadata: videoConfig,
-        platforms: ["tiktok", "instagram", "youtube", "facebook"],
+        platforms: ["tiktok", "youtube"],
         scheduled_post_time: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // Schedule for 8 hours from now
     }).select();
 
