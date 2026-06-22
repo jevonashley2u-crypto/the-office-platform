@@ -25,8 +25,8 @@ async function sendTelegram(text: string) {
     });
 }
 
-// Daily at 9:00 PM Local (02:00 UTC)
-Deno.cron("Cross-Division Insight Agent", "0 2 * * *", async () => {
+// 2x daily — 8 AM briefing + 10 PM nightly report CDT (13:00, 03:00 UTC)
+Deno.cron("Cross-Division Insight Agent", "0 3,13 * * *", async () => {
   console.log("Running Insight Agent Execution for Build Catalyst");
 
   try {

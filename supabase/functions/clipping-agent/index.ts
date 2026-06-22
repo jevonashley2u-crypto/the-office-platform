@@ -43,8 +43,8 @@ async function sendTelegramWithButtons(text: string, videoId: string) {
     });
 }
 
-// Daily at 8:45 PM Local (01:45 UTC)
-Deno.cron("Content Clipping Agent", "45 1 * * *", async () => {
+// 2x daily — 7 AM and 7 PM CDT (12:00, 00:00 UTC)
+Deno.cron("Content Clipping Agent", "0 0,12 * * *", async () => {
   console.log("Running Content Clipping & Editing Agent for Silverfoxx2u");
 
   try {

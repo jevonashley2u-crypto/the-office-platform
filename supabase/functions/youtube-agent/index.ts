@@ -13,8 +13,8 @@ const youtubeChannelId = Deno.env.get("YOUTUBE_CHANNEL_ID");
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Daily at 8:00 PM Local (01:00 UTC)
-Deno.cron("YouTube Agent Execution", "0 1 * * *", async () => {
+// Every 6 hours — 24/7 YouTube monitoring
+Deno.cron("YouTube Agent Execution", "0 */6 * * *", async () => {
   console.log("Running YouTube Agent Execution for Silverfoxx2u");
 
   try {

@@ -13,8 +13,8 @@ const youtubeToken = Deno.env.get("YOUTUBE_OAUTH_TOKEN");
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Runs at 9:00 PM Local (02:00 UTC)
-Deno.cron("Platform Distribution Agent", "0 2 * * *", async () => {
+// Every 2 hours — posts at optimal windows throughout the day
+Deno.cron("Platform Distribution Agent", "0 */2 * * *", async () => {
   console.log("Running Platform Distribution & Auto-Posting Agent");
 
   try {

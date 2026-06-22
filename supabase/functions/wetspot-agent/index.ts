@@ -17,8 +17,8 @@ async function sendTelegram(text: string) {
   });
 }
 
-// Daily at 8:30 PM Local (01:30 UTC) — runs alongside social-agent
-Deno.cron("The Wet Spot Growth Agent", "30 1 * * *", async () => {
+// 3x daily — 8 AM, 12 PM, 6 PM CDT (13:00, 17:00, 23:00 UTC)
+Deno.cron("The Wet Spot Growth Agent", "0 13,17,23 * * *", async () => {
   console.log("Running The Wet Spot Growth Agent (Agent 9)");
 
   try {
