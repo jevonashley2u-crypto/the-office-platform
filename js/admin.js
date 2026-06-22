@@ -189,6 +189,18 @@ async function fetchRawFootage() {
     // Filter out the hidden placeholder file Supabase sometimes creates
     const files = data.filter(f => f.name !== '.emptyFolderPlaceholder');
 
+    // Update metrics
+    const metricTotal = document.getElementById("metric-total");
+    const metricTime = document.getElementById("metric-time");
+    const metricLastFile = document.getElementById("metric-lastfile");
+    if (metricTotal) metricTotal.innerText = files.length;
+    if (metricTime && files.length > 0) {
+        metricTime.innerText = new Date(files[0].created_at).toLocaleString();
+    }
+    if (metricLastFile && files.length > 0) {
+        metricLastFile.innerText = files[0].name;
+    }
+
     if (files.length === 0) {
         container.innerHTML = `<div class="loading">No raw footage found. Upload a video above to start.</div>`;
         return;
@@ -216,67 +228,120 @@ function setupUploadZone() {
 
     fileInput.addEventListener('change', (e) => {
         console.log("Upload clicked");
-        console.log(fileInput.files);
-        console.log(fileInput.files[0]);
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
+            console.log("Selected file:", file);
             
-            // Force the UI update synchronously
-            uploadContent.style.display = 'none';
-            uploadProgress.style.display = 'block';
-            percentText.innerText = 'Starting upload for: ' + file.name + '...';
-            
-            // Start the upload asynchronously
+            // Hide previous cards
+            const successCard = document.getElementById('upload-success-card');
+            const errorCard = document.getElementById('upload-error-card');
+            if(successCard) successCard.style.display = 'none';
+            if(errorCard) errorCard.style.display = 'none';
+
+            // Show progress container
+            const progressContainer = document.getElementById('upload-progress-container');
+            if(progressContainer) progressContainer.style.display = 'block';
+
+            // Reset progress bar
+            const percentText = document.getElementById('progress-percent');
+            const fill = document.getElementById('progress-bar-fill');
+            const btn = document.getElementById('upload-btn');
+            if(percentText) percentText.innerText = '0%';
+            if(fill) fill.style.width = '0%';
+            if(btn) {
+                btn.innerText = 'Uploading... 0%';
+                btn.style.opacity = '0.7';
+                btn.style.pointerEvents = 'none';
+            }
+            fileInput.disabled = true;
+
+            console.log("Upload started");
             handleUpload(file);
         }
     });
 
-    async function handleUpload(file) {
-        // Basic extension validation instead of MIME type
-        const fileNameOriginal = file.name.toLowerCase();
-        if (!fileNameOriginal.endsWith('.mp4') && !fileNameOriginal.endsWith('.mov')) {
-            alert('Warning: File might not be a video. Attempting upload anyway...');
-        }
-
+    function handleUpload(file) {
+        const startTime = Date.now();
         // Clean filename: remove spaces, lowercase, add timestamp to avoid collisions
         const cleanName = file.name.replace(/\s+/g, '_').toLowerCase();
         const fileName = `${Date.now()}_${cleanName}`;
 
-        console.log("Uploading file:", file.name, file.size, file.type);
-        try {
-            const { data, error } = await supabaseClient.storage
-                .from('raw_footage')
-                .upload(fileName, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+        const successCard = document.getElementById('upload-success-card');
+        const errorCard = document.getElementById('upload-error-card');
+        const progressContainer = document.getElementById('upload-progress-container');
+        const percentText = document.getElementById('progress-percent');
+        const fill = document.getElementById('progress-bar-fill');
+        const btn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('raw-file-input');
 
-            console.log("Upload response:", data, error);
+        const resetUploadState = () => {
+            if(btn) {
+                btn.innerText = 'Upload Another File';
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            }
+            if(progressContainer) progressContainer.style.display = 'none';
+            if(fileInput) {
+                fileInput.disabled = false;
+                fileInput.value = '';
+            }
+        };
 
-            if (error) throw error;
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                if(percentText) percentText.innerText = percent + '%';
+                if(fill) fill.style.width = percent + '%';
+                if(btn) btn.innerText = `Uploading... ${percent}%`;
+                console.log("Progress:", percent + "%");
+            }
+        };
 
-            // Success
-            percentText.innerText = 'Upload Complete! ✅';
-            setTimeout(() => {
-                uploadContent.style.display = 'block';
-                uploadProgress.style.display = 'none';
-                fetchRawFootage(); // Refresh the list
-            }, 2000);
+        xhr.onload = () => {
+            resetUploadState();
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Upload completed");
+                const data = JSON.parse(xhr.responseText);
+                console.log("Upload response:", data);
 
-        } catch (err) {
-            console.error("UPLOAD CRASHED:", err);
-            console.error('Upload error:', err);
-            percentText.innerText = 'Upload Failed ❌';
-            setTimeout(() => {
-                uploadContent.style.display = 'block';
-                uploadProgress.style.display = 'none';
-            }, 3000);
-            alert('Failed to upload video: ' + error.message);
-        } finally {
-            // Reset the file input so the same file can be selected again
-            const fileInput = document.getElementById('raw-file-input');
-            if (fileInput) fileInput.value = '';
-        }
+                const { data: { publicUrl } } = supabaseClient.storage.from('raw_footage').getPublicUrl(fileName);
+                console.log("File URL:", publicUrl);
+
+                if(successCard) {
+                    successCard.style.display = 'block';
+                    document.getElementById('success-filename').innerText = file.name;
+                    document.getElementById('success-size').innerText = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+                    document.getElementById('success-time').innerText = ((Date.now() - startTime) / 1000).toFixed(1) + ' seconds';
+                    document.getElementById('success-url').href = publicUrl;
+                }
+                fetchRawFootage();
+            } else {
+                let errObj = {};
+                try { errObj = JSON.parse(xhr.responseText); } catch(e){}
+                console.error("UPLOAD CRASHED:", errObj);
+                if(errorCard) {
+                    errorCard.style.display = 'block';
+                    document.getElementById('error-reason').innerText = errObj.message || `HTTP ${xhr.status} ${xhr.statusText}`;
+                }
+            }
+        };
+
+        xhr.onerror = () => {
+            resetUploadState();
+            console.error("UPLOAD CRASHED: Network Error");
+            if(errorCard) {
+                errorCard.style.display = 'block';
+                document.getElementById('error-reason').innerText = "Network Error - check console.";
+            }
+        };
+
+        xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/raw_footage/${fileName}`);
+        xhr.setRequestHeader('Authorization', `Bearer ${SUPABASE_ANON_KEY}`);
+        xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+        xhr.setRequestHeader('cache-control', '3600');
+        if (file.type) xhr.setRequestHeader('Content-Type', file.type);
+        xhr.send(file);
     }
 }
 

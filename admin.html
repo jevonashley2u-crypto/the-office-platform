@@ -67,16 +67,51 @@
                     <span class="badge">storage</span>
                 </div>
                 <div class="card-body">
-                    <div class="upload-zone" id="upload-zone" style="border: none; padding: 1rem; background: transparent; position: relative;">
-                        <!-- CRITICAL FIX: Safari suppresses change events on display:none file inputs. Must use opacity 0 and absolute positioning instead. -->
+                    <div class="upload-zone" id="upload-zone" style="border: 2px dashed rgba(255,255,255,0.1); padding: 1.5rem; background: rgba(0,0,0,0.2); position: relative; border-radius: 12px; transition: all 0.3s ease;">
                         <input type="file" id="raw-file-input" accept="video/mp4,video/quicktime" style="opacity: 0; position: absolute; top: 0; left: 0; width: 1px; height: 1px; z-index: -1;">
+                        
                         <div class="upload-content" id="upload-content">
-                            <label for="raw-file-input" id="upload-btn" style="display: inline-block; box-sizing: border-box; background: var(--accent-primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%; text-align: center;">📤 Upload Video (.mp4, .mov)</label>
+                            <label for="raw-file-input" id="upload-btn" style="display: inline-block; box-sizing: border-box; background: var(--accent-primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%; text-align: center; transition: all 0.2s ease;">📤 Upload File</label>
                         </div>
-                        <div class="upload-progress" id="upload-progress" style="display: none; padding: 10px; background: rgba(138,43,226,0.1); border-radius: 8px; border: 1px solid var(--accent-primary);">
-                            <p style="margin: 0;">Uploading... <span id="upload-percent" style="font-weight: bold;">0%</span></p>
+
+                        <!-- Progress Bar Container -->
+                        <div id="upload-progress-container" style="display: none; margin-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
+                                <span id="progress-text">Uploading...</span>
+                                <span id="progress-percent" style="font-weight: bold; color: var(--accent-primary);">0%</span>
+                            </div>
+                            <div style="width: 100%; background: rgba(255,255,255,0.1); border-radius: 8px; height: 8px; overflow: hidden;">
+                                <div id="progress-bar-fill" style="width: 0%; height: 100%; background: var(--accent-primary); transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Success Card -->
+                        <div id="upload-success-card" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(46, 204, 113, 0.1); border: 1px solid #2ecc71; border-radius: 8px;">
+                            <h3 style="color: #2ecc71; margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">✅ Upload Complete</h3>
+                            <div style="font-size: 0.9rem; color: #ddd;">
+                                <p style="margin: 4px 0;"><strong>File Name:</strong> <span id="success-filename"></span></p>
+                                <p style="margin: 4px 0;"><strong>File Size:</strong> <span id="success-size"></span></p>
+                                <p style="margin: 4px 0;"><strong>Upload Time:</strong> <span id="success-time"></span></p>
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <a id="success-url" href="#" target="_blank" style="display: inline-block; background: #2ecc71; color: #000; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">View File</a>
+                            </div>
+                        </div>
+
+                        <!-- Error Card -->
+                        <div id="upload-error-card" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; border-radius: 8px;">
+                            <h3 style="color: #e74c3c; margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">❌ Upload Failed</h3>
+                            <p style="margin: 0; font-size: 0.9rem; color: #ddd;"><strong>Reason:</strong> <span id="error-reason"></span></p>
                         </div>
                     </div>
+                    
+                    <!-- Upload Metrics -->
+                    <div id="vault-metrics" style="display: flex; gap: 1rem; margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 0.85rem; color: #aaa;">
+                        <div><strong style="color: #fff;">Total Files:</strong> <span id="metric-total">-</span></div>
+                        <div><strong style="color: #fff;">Latest Upload:</strong> <span id="metric-time">-</span></div>
+                        <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;"><strong style="color: #fff;">Last File:</strong> <span id="metric-lastfile">-</span></div>
+                    </div>
+
                     <div id="vault-container" style="margin-top: 1rem;">
                         <div class="loading">Fetching raw footage...</div>
                     </div>
