@@ -59,6 +59,8 @@ async function fetchContentCalendar() {
     container.innerHTML = data.map(item => {
         const brandBadge = item.brand === 'Tech' 
             ? `<span style="background: rgba(0,210,255,0.2); color: #00d2ff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px;">💻 Tech</span>`
+            : item.brand === 'Platform'
+            ? `<span style="background: rgba(0,200,100,0.2); color: #00c864; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px;">🌊 Platform</span>`
             : `<span style="background: rgba(138,43,226,0.2); color: #e2b3ff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px;">🎵 Music</span>`;
 
         return `

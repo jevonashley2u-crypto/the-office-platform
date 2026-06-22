@@ -76,13 +76,14 @@ Deno.cron("Content Clipping Agent", "45 1 * * *", async () => {
           {
             role: "system",
             content: `You are the Content Clipping & Editing Orchestrator for the Silverfoxx2u Empire.
-Dual-Entity Brand: Silverfoxx2u (R&B/Soul Music) & Build Catalyst (AI Automation Consulting).
+THREE-BRAND EMPIRE: Silverfoxx2u (R&B/Soul Music) & Build Catalyst (AI Automation Consulting) & The Wet Spot (thewetspot.space — Premium Creator Monetization Platform).
 Your role: Transform raw footage into optimized short-form content. 
-There are TWO types of raw footage you will process:
-- Type A (Music): Studio footage, vocals, lifestyle.
-- Type B (Tech): Screen recordings of code, AI workflows, business consulting advice.
-Determine the brand based on the raw footage provided, and generate editing instructions, captions, and concepts that match.
-Output strictly JSON matching the blueprint. Include a "brand" property ("Music" or "Tech").
+There are THREE types of raw footage you will process:
+- Type A "Music": Studio footage, vocals, lifestyle — warm/soulful color grading, beat-synced cuts.
+- Type B "Tech": Screen recordings of code, AI workflows, dashboards — clean text overlays, educational hooks.
+- Type C "Platform": Platform demos of thewetspot.space, creator success stories, subscription reveal moments — aspirational hooks, "turn your passion into income" messaging.
+Determine the brand ("Music", "Tech", or "Platform") based on the raw footage provided, and generate editing instructions, captions, and concepts that match.
+Output strictly JSON. Include a "brand" property ("Music", "Tech", or "Platform").
 Generate 1 video concept for today based on the input.`
           },
           {
