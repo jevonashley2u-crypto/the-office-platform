@@ -214,9 +214,6 @@ function setupUploadZone() {
 
     if (!uploadBtn || !fileInput) return;
 
-    // Click to open file dialog
-    uploadBtn.addEventListener('click', () => fileInput.click());
-
     fileInput.addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
             handleUpload(e.target.files[0]);
