@@ -246,19 +246,111 @@ function setupUploadZone() {
             const percentText = document.getElementById('progress-percent');
             const fill = document.getElementById('progress-bar-fill');
             const btn = document.getElementById('upload-btn');
+            const progressStatus = document.getElementById('progress-text');
             if(percentText) percentText.innerText = '0%';
             if(fill) fill.style.width = '0%';
+            if(progressStatus) progressStatus.innerText = 'Initializing...';
             if(btn) {
-                btn.innerText = 'Uploading... 0%';
+                btn.innerText = 'Initializing...';
                 btn.style.opacity = '0.7';
                 btn.style.pointerEvents = 'none';
             }
             fileInput.disabled = true;
 
-            console.log("Upload started");
-            handleUpload(file);
+            console.log("Upload sequence started");
+            
+            // Check file size. If > 45MB, compress first.
+            const maxSize = 45 * 1024 * 1024;
+            if (file.size > maxSize) {
+                console.log("File > 45MB detected. Starting FFmpeg compression.");
+                compressAndUpload(file);
+            } else {
+                if(progressStatus) progressStatus.innerText = 'Uploading...';
+                handleUpload(file);
+            }
         }
     });
+
+    let ffmpegInstance = null;
+
+    async function compressAndUpload(file) {
+        const percentText = document.getElementById('progress-percent');
+        const fill = document.getElementById('progress-bar-fill');
+        const btn = document.getElementById('upload-btn');
+        const progressStatus = document.getElementById('progress-text');
+        
+        try {
+            if (!ffmpegInstance) {
+                if(progressStatus) progressStatus.innerText = 'Loading Compressor...';
+                const { createFFmpeg, fetchFile } = FFmpeg;
+                ffmpegInstance = createFFmpeg({
+                    log: true,
+                    corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+                });
+                
+                ffmpegInstance.setProgress(({ ratio }) => {
+                    const percent = Math.max(0, Math.min(100, Math.round(ratio * 100)));
+                    if(percentText) percentText.innerText = percent + '%';
+                    if(fill) fill.style.width = percent + '%';
+                    if(btn) btn.innerText = `Compressing... ${percent}%`;
+                });
+                
+                await ffmpegInstance.load();
+            }
+
+            if(progressStatus) progressStatus.innerText = 'Compressing...';
+            const { fetchFile } = FFmpeg;
+            const inputName = 'input_' + Date.now() + '.mp4';
+            const outputName = 'output_' + Date.now() + '.mp4';
+            
+            ffmpegInstance.FS('writeFile', inputName, await fetchFile(file));
+            
+            // Aggressive compression: downscale to 720p, lower bitrate, very fast preset
+            await ffmpegInstance.run(
+                '-i', inputName, 
+                '-vcodec', 'libx264', 
+                '-crf', '30', 
+                '-preset', 'ultrafast', 
+                '-vf', 'scale=-2:720',
+                outputName
+            );
+            
+            const data = ffmpegInstance.FS('readFile', outputName);
+            
+            const compressedFile = new File([data.buffer], file.name, { type: 'video/mp4' });
+            console.log("Compression complete. Original size:", file.size, "Compressed size:", compressedFile.size);
+            
+            // Cleanup FS
+            ffmpegInstance.FS('unlink', inputName);
+            ffmpegInstance.FS('unlink', outputName);
+            
+            if(progressStatus) progressStatus.innerText = 'Uploading...';
+            if(percentText) percentText.innerText = '0%';
+            if(fill) fill.style.width = '0%';
+            
+            handleUpload(compressedFile);
+            
+        } catch (e) {
+            console.error("COMPRESSION FAILED:", e);
+            const errorCard = document.getElementById('upload-error-card');
+            const progressContainer = document.getElementById('upload-progress-container');
+            const fileInput = document.getElementById('raw-file-input');
+            if(progressContainer) progressContainer.style.display = 'none';
+            if(errorCard) {
+                errorCard.style.display = 'block';
+                document.getElementById('error-reason').innerText = "Compression failed: " + e.message;
+            }
+            if(btn) {
+                btn.innerText = 'Upload Another File';
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            }
+            if(fileInput) {
+                fileInput.disabled = false;
+                fileInput.value = '';
+            }
+        }
+    }
 
     function handleUpload(file) {
         const startTime = Date.now();
