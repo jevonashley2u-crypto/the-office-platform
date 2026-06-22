@@ -46,7 +46,7 @@ def process_queue():
         editing = ai_metadata.get('editing_metadata', {})
         
         duration = editing.get('duration', 15)
-        color = editing.get('color_grade', {'contrast': 1.0, 'brightness': 0.0, 'saturation': 1.0})
+        lut_file = editing.get('lut_file', '')
         texts = editing.get('text_overlays', [])
 
         local_rendered = f"rendered_{item['id']}.mp4"
@@ -58,8 +58,18 @@ def process_queue():
             stream = ffmpeg.filter(stream, 'scale', 1080, 1920, force_original_aspect_ratio='increase')
             stream = ffmpeg.filter(stream, 'crop', 1080, 1920)
 
-            # Apply Color Grading
-            stream = ffmpeg.filter(stream, 'eq', contrast=color.get('contrast', 1.0), brightness=color.get('brightness', 0.0), saturation=color.get('saturation', 1.0))
+            # Apply Color Grading via LUT
+            if lut_file:
+                lut_path = os.path.join("luts", lut_file)
+                if os.path.exists(lut_path):
+                    # lut3d requires the file path to be properly escaped or absolute.
+                    # We'll use the absolute path just to be safe with ffmpeg.
+                    abs_lut_path = os.path.abspath(lut_path).replace('\\', '/')
+                    # Also ffmpeg lut3d filter needs the path to be escaped if it has colons or backslashes
+                    # For mac it should be fine. We format it like: lut3d=file='path/to/lut.cube'
+                    stream = ffmpeg.filter(stream, 'lut3d', file=abs_lut_path)
+                else:
+                    print(f"Warning: LUT file '{lut_path}' not found. Skipping color grade.")
 
             # Apply Text Overlays
             # Using standard Mac fonts (Arial Black or Helvetica). If not found, ffmpeg will throw, so we keep it simple or use a fallback.

@@ -92,12 +92,17 @@ Output strictly JSON matching this structure:
   "description": "Caption for social media",
   "editing_metadata": {
     "duration": 15,
-    "color_grade": {"contrast": 1.1, "brightness": 0.05, "saturation": 1.2},
+    "lut_file": "music.cube", 
     "text_overlays": [
       {"start_time": 0, "end_time": 3, "text": "HOOK TEXT HERE", "font_size": 72, "y_position": "(h-text_h)/2"}
     ]
   }
 }
+Note: For lut_file, ALWAYS output exactly one of these strings based on the brand:
+- If Music: "music.cube"
+- If Tech: "tech.cube"
+- If Platform: "platform.cube"
+
 Generate 1 elite video concept for today based on the input.`
           },
           {
