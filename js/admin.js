@@ -216,21 +216,22 @@ function setupUploadZone() {
 
     fileInput.addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
-            handleUpload(e.target.files[0]);
+            const file = e.target.files[0];
+            handleUpload(file);
         }
     });
 
     async function handleUpload(file) {
-        // Basic validation
-        if (!file.type.startsWith('video/')) {
-            alert('Please upload a valid video file (.mp4, .mov)');
-            return;
-        }
-
-        // Show uploading state
+        // Show uploading state immediately
         uploadContent.style.display = 'none';
         uploadProgress.style.display = 'block';
         percentText.innerText = 'Starting...';
+
+        // Basic extension validation instead of MIME type
+        const fileNameOriginal = file.name.toLowerCase();
+        if (!fileNameOriginal.endsWith('.mp4') && !fileNameOriginal.endsWith('.mov')) {
+            alert('Warning: File might not be a video. Attempting upload anyway...');
+        }
 
         // Clean filename: remove spaces, lowercase, add timestamp to avoid collisions
         const cleanName = file.name.replace(/\s+/g, '_').toLowerCase();
