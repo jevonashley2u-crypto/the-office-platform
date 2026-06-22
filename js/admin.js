@@ -1,7 +1,7 @@
 // Initialize Supabase Client
 const SUPABASE_URL = "https://uxpdrchfucfyjwckjhuu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4cGRyY2hmdWNmeWp3Y2tqaHV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzYyMTEsImV4cCI6MjA5NzM1MjIxMX0.i_p_C_MFb86C5b1IAEWblrNz3hPW9QC7djpYsN0rl1s";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
     fetchInsights();
@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function fetchInsights() {
     const container = document.getElementById("insights-container");
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('insight_impacts')
         .select('*')
         .order('created_at', { ascending: false })
@@ -42,7 +42,7 @@ async function fetchInsights() {
 
 async function fetchContentCalendar() {
     const container = document.getElementById("content-container");
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('content_calendar')
         .select('*')
         .order('created_at', { ascending: false })
@@ -78,7 +78,7 @@ async function fetchContentCalendar() {
 
 async function fetchAgents() {
     const container = document.getElementById("agents-container");
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('agents')
         .select('*')
         .order('last_run', { ascending: false });
@@ -112,7 +112,7 @@ async function fetchRenderQueue() {
     const container = document.getElementById("render-container");
     if (!container) return;
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('video_queue')
         .select('*')
         .order('created_at', { ascending: false })
@@ -138,7 +138,7 @@ async function fetchRenderQueue() {
 
         let videoElement = '';
         if (item.rendered_file_path && (item.status === 'ready_to_post' || item.status === 'posted')) {
-            const { data: publicUrlData } = supabase.storage.from('rendered_shorts').getPublicUrl(item.rendered_file_path);
+            const { data: publicUrlData } = supabaseClient.storage.from('rendered_shorts').getPublicUrl(item.rendered_file_path);
             const videoUrl = publicUrlData.publicUrl;
             videoElement = `
                 <div style="margin-top: 10px;">
@@ -172,7 +172,7 @@ async function fetchRawFootage() {
     const container = document.getElementById("vault-container");
     if (!container) return;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .storage
         .from('raw_footage')
         .list('', {
@@ -215,6 +215,9 @@ function setupUploadZone() {
     if (!uploadBtn || !fileInput) return;
 
     fileInput.addEventListener('change', (e) => {
+        console.log("Upload clicked");
+        console.log(fileInput.files);
+        console.log(fileInput.files[0]);
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
             
@@ -239,13 +242,16 @@ function setupUploadZone() {
         const cleanName = file.name.replace(/\s+/g, '_').toLowerCase();
         const fileName = `${Date.now()}_${cleanName}`;
 
+        console.log("Uploading file:", file.name, file.size, file.type);
         try {
-            const { data, error } = await supabase.storage
+            const { data, error } = await supabaseClient.storage
                 .from('raw_footage')
                 .upload(fileName, file, {
                     cacheControl: '3600',
                     upsert: false
                 });
+
+            console.log("Upload response:", data, error);
 
             if (error) throw error;
 
@@ -257,8 +263,9 @@ function setupUploadZone() {
                 fetchRawFootage(); // Refresh the list
             }, 2000);
 
-        } catch (error) {
-            console.error('Upload error:', error);
+        } catch (err) {
+            console.error("UPLOAD CRASHED:", err);
+            console.error('Upload error:', err);
             percentText.innerText = 'Upload Failed ❌';
             setTimeout(() => {
                 uploadContent.style.display = 'block';
@@ -314,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
         try {
-            const { data, error } = await supabase.functions.invoke("chat-agent", {
+            const { data, error } = await supabaseClient.functions.invoke("chat-agent", {
                 body: { message: text }
             });
 
