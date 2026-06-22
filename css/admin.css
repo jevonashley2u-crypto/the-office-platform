@@ -236,11 +236,12 @@ body {
     flex-direction: column;
     overflow: hidden;
     z-index: 1000;
-    transition: transform 0.3s ease;
+    transition: height 0.3s ease;
+    height: 400px;
 }
 
 .chat-widget.collapsed {
-    transform: translateY(calc(100% - 50px));
+    height: 52px; /* Just the header */
 }
 
 .chat-header {

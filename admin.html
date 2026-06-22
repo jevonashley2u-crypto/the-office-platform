@@ -67,14 +67,13 @@
                     <span class="badge">storage</span>
                 </div>
                 <div class="card-body">
-                    <div class="upload-zone" id="upload-zone">
+                    <div class="upload-zone" id="upload-zone" style="border: none; padding: 1rem; background: transparent;">
                         <input type="file" id="raw-file-input" accept="video/mp4,video/quicktime" style="display: none;">
                         <div class="upload-content" id="upload-content">
-                            <span style="font-size: 2rem;">📤</span>
-                            <p>Click or drag to drop raw footage (.mp4, .mov)</p>
+                            <button id="upload-btn" style="background: var(--accent-primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%;">📤 Upload Video (.mp4, .mov)</button>
                         </div>
-                        <div class="upload-progress" id="upload-progress" style="display: none;">
-                            <p>Uploading... <span id="upload-percent">0%</span></p>
+                        <div class="upload-progress" id="upload-progress" style="display: none; padding: 10px; background: rgba(138,43,226,0.1); border-radius: 8px; border: 1px solid var(--accent-primary);">
+                            <p style="margin: 0;">Uploading... <span id="upload-percent" style="font-weight: bold;">0%</span></p>
                         </div>
                     </div>
                     <div id="vault-container" style="margin-top: 1rem;">

@@ -206,39 +206,16 @@ async function fetchRawFootage() {
 }
 
 function setupUploadZone() {
-    const dropZone = document.getElementById('upload-zone');
+    const uploadBtn = document.getElementById('upload-btn');
     const fileInput = document.getElementById('raw-file-input');
     const uploadContent = document.getElementById('upload-content');
     const uploadProgress = document.getElementById('upload-progress');
     const percentText = document.getElementById('upload-percent');
 
-    if (!dropZone || !fileInput) return;
+    if (!uploadBtn || !fileInput) return;
 
     // Click to open file dialog
-    dropZone.addEventListener('click', () => fileInput.click());
-
-    // Drag and drop events
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = 'var(--accent-primary)';
-        dropZone.style.background = 'rgba(138, 43, 226, 0.1)';
-    });
-
-    dropZone.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-        dropZone.style.background = 'rgba(255, 255, 255, 0.02)';
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-        dropZone.style.background = 'rgba(255, 255, 255, 0.02)';
-        
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            handleUpload(e.dataTransfer.files[0]);
-        }
-    });
+    uploadBtn.addEventListener('click', () => fileInput.click());
 
     fileInput.addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
