@@ -41,18 +41,52 @@ def process_queue():
             supabase.table('video_queue').update({'status': 'failed'}).eq('id', item['id']).execute()
             continue
 
-        # 3. Process Video with FFmpeg
+        # 3. Parse Editing Metadata
+        ai_metadata = item.get('ai_metadata', {})
+        editing = ai_metadata.get('editing_metadata', {})
+        
+        duration = editing.get('duration', 15)
+        color = editing.get('color_grade', {'contrast': 1.0, 'brightness': 0.0, 'saturation': 1.0})
+        texts = editing.get('text_overlays', [])
+
         local_rendered = f"rendered_{item['id']}.mp4"
-        print(f"Rendering video to {local_rendered}...")
+        print(f"Rendering video ({duration}s) to {local_rendered}...")
         
         try:
-            # We crop/scale to 9:16 (vertical format)
-            # This is a very basic FFmpeg operation. More complex edits like captions
-            # would use ImageMagick drawtext filters.
+            # Base stream: Scale to 9:16 and crop
             stream = ffmpeg.input(local_raw)
             stream = ffmpeg.filter(stream, 'scale', 1080, 1920, force_original_aspect_ratio='increase')
             stream = ffmpeg.filter(stream, 'crop', 1080, 1920)
-            stream = ffmpeg.output(stream, local_rendered, vcodec='libx264', acodec='aac', t=15) # 15 second short
+
+            # Apply Color Grading
+            stream = ffmpeg.filter(stream, 'eq', contrast=color.get('contrast', 1.0), brightness=color.get('brightness', 0.0), saturation=color.get('saturation', 1.0))
+
+            # Apply Text Overlays
+            # Using standard Mac fonts (Arial Black or Helvetica). If not found, ffmpeg will throw, so we keep it simple or use a fallback.
+            font_path = "/System/Library/Fonts/Helvetica.ttc"
+            if not os.path.exists(font_path):
+                 font_path = "/Library/Fonts/Arial.ttf" # Fallback
+
+            for text_data in texts:
+                start_t = text_data.get('start_time', 0)
+                end_t = text_data.get('end_time', 5)
+                text_content = text_data.get('text', '').replace("'", "")
+                font_size = text_data.get('font_size', 72)
+                y_pos = text_data.get('y_position', '(h-text_h)/2')
+
+                if text_content and os.path.exists(font_path):
+                    stream = ffmpeg.filter(
+                        stream, 'drawtext',
+                        fontfile=font_path,
+                        text=text_content,
+                        fontsize=font_size,
+                        fontcolor='white',
+                        box=1, boxcolor='black@0.5', boxborderw=10,
+                        x='(w-text_w)/2', y=y_pos,
+                        enable=f'between(t,{start_t},{end_t})'
+                    )
+
+            stream = ffmpeg.output(stream, local_rendered, vcodec='libx264', acodec='aac', t=duration)
             ffmpeg.run(stream, quiet=True, overwrite_output=True)
             print("Render complete!")
         except Exception as e:

@@ -77,14 +77,28 @@ Deno.cron("Content Clipping Agent", "0 0,12 * * *", async () => {
             role: "system",
             content: `You are the Content Clipping & Editing Orchestrator for the Silverfoxx2u Empire.
 THREE-BRAND EMPIRE: Silverfoxx2u (R&B/Soul Music) & Build Catalyst (AI Automation Consulting) & The Wet Spot (thewetspot.space — Premium Creator Monetization Platform).
-Your role: Transform raw footage into optimized short-form content. 
+Your role: Transform raw footage into world-class, high-retention short-form content. You are an ELITE Hollywood / TikTok retention editor.
 There are THREE types of raw footage you will process:
 - Type A "Music": Studio footage, vocals, lifestyle — warm/soulful color grading, beat-synced cuts.
 - Type B "Tech": Screen recordings of code, AI workflows, dashboards — clean text overlays, educational hooks.
 - Type C "Platform": Platform demos of thewetspot.space, creator success stories, subscription reveal moments — aspirational hooks, "turn your passion into income" messaging.
-Determine the brand ("Music", "Tech", or "Platform") based on the raw footage provided, and generate editing instructions, captions, and concepts that match.
-Output strictly JSON. Include a "brand" property ("Music", "Tech", or "Platform").
-Generate 1 video concept for today based on the input.`
+
+Determine the brand ("Music", "Tech", or "Platform") based on the raw footage provided.
+Output strictly JSON matching this structure:
+{
+  "brand": "Music",
+  "title": "Short catchy title",
+  "concept": "concept_name",
+  "description": "Caption for social media",
+  "editing_metadata": {
+    "duration": 15,
+    "color_grade": {"contrast": 1.1, "brightness": 0.05, "saturation": 1.2},
+    "text_overlays": [
+      {"start_time": 0, "end_time": 3, "text": "HOOK TEXT HERE", "font_size": 72, "y_position": "(h-text_h)/2"}
+    ]
+  }
+}
+Generate 1 elite video concept for today based on the input.`
           },
           {
             role: "user",

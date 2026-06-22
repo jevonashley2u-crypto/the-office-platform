@@ -60,6 +60,29 @@
                 </div>
             </section>
 
+            <!-- Raw Footage Vault -->
+            <section class="card widget-vault">
+                <div class="card-header">
+                    <h2>🎥 Raw Footage Vault</h2>
+                    <span class="badge">storage</span>
+                </div>
+                <div class="card-body">
+                    <div class="upload-zone" id="upload-zone">
+                        <input type="file" id="raw-file-input" accept="video/mp4,video/quicktime" style="display: none;">
+                        <div class="upload-content" id="upload-content">
+                            <span style="font-size: 2rem;">📤</span>
+                            <p>Click or drag to drop raw footage (.mp4, .mov)</p>
+                        </div>
+                        <div class="upload-progress" id="upload-progress" style="display: none;">
+                            <p>Uploading... <span id="upload-percent">0%</span></p>
+                        </div>
+                    </div>
+                    <div id="vault-container" style="margin-top: 1rem;">
+                        <div class="loading">Fetching raw footage...</div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Agent Activity Log -->
             <section class="card widget-agents">
                 <div class="card-header">

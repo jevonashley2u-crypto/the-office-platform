@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchContentCalendar();
     fetchRenderQueue();
     fetchAgents();
+    fetchRawFootage();
+    setupUploadZone();
 });
 
 async function fetchInsights() {
@@ -134,14 +136,160 @@ async function fetchRenderQueue() {
         if (item.status === 'posted') statusColor = "#3b82f6";           // blue
         if (item.status === 'failed') statusColor = "#ef4444";           // red
 
+        let videoElement = '';
+        if (item.rendered_file_path && (item.status === 'ready_to_post' || item.status === 'posted')) {
+            const { data: publicUrlData } = supabase.storage.from('rendered_shorts').getPublicUrl(item.rendered_file_path);
+            const videoUrl = publicUrlData.publicUrl;
+            videoElement = `
+                <div style="margin-top: 10px;">
+                    <video width="100%" height="200" controls style="border-radius: 8px; background: #000;">
+                        <source src="${videoUrl}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            `;
+        } else if (item.status === 'pending_render') {
+             videoElement = `
+                <div style="margin-top: 10px; padding: 20px; background: rgba(249, 115, 22, 0.1); border-radius: 8px; text-align: center; border: 1px dashed #f97316;">
+                    <span style="color: #f97316;">⚙️ Local Render Farm is cutting this video...</span>
+                </div>
+            `;
+        }
+
         return `
         <div class="content-item" style="border-left: 3px solid ${statusColor}; margin-bottom: 0.75rem; padding-left: 1rem;">
             <span class="platform-tag" style="background: ${statusColor}22; color: ${statusColor}; font-weight: bold; border: 1px solid ${statusColor}55;">${item.status.replace('_', ' ').toUpperCase()}</span>
             <strong style="display: block; margin-top: 0.5rem; font-size: 1rem;">${item.title}</strong>
             <p style="margin: 0.25rem 0 0 0; color: #94a3b8;">${item.description || item.concept}</p>
+            ${videoElement}
         </div>
         `;
     }).join("");
+}
+
+// Raw Footage Vault Logic
+async function fetchRawFootage() {
+    const container = document.getElementById("vault-container");
+    if (!container) return;
+
+    const { data, error } = await supabase
+        .storage
+        .from('raw_footage')
+        .list('', {
+            limit: 20,
+            offset: 0,
+            sortBy: { column: 'created_at', order: 'desc' }
+        });
+
+    if (error) {
+        container.innerHTML = `<div class="loading" style="color: #ef4444;">Error: ${error.message}</div>`;
+        return;
+    }
+
+    // Filter out the hidden placeholder file Supabase sometimes creates
+    const files = data.filter(f => f.name !== '.emptyFolderPlaceholder');
+
+    if (files.length === 0) {
+        container.innerHTML = `<div class="loading">No raw footage found. Upload a video above to start.</div>`;
+        return;
+    }
+
+    container.innerHTML = files.map(file => {
+        const sizeMB = (file.metadata?.size / (1024 * 1024)).toFixed(1);
+        return `
+        <div class="vault-item">
+            <div class="vault-item-name">🎞️ ${file.name}</div>
+            <div class="vault-item-size">${sizeMB} MB</div>
+        </div>
+        `;
+    }).join("");
+}
+
+function setupUploadZone() {
+    const dropZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('raw-file-input');
+    const uploadContent = document.getElementById('upload-content');
+    const uploadProgress = document.getElementById('upload-progress');
+    const percentText = document.getElementById('upload-percent');
+
+    if (!dropZone || !fileInput) return;
+
+    // Click to open file dialog
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // Drag and drop events
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--accent-primary)';
+        dropZone.style.background = 'rgba(138, 43, 226, 0.1)';
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+        dropZone.style.background = 'rgba(255, 255, 255, 0.02)';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+        dropZone.style.background = 'rgba(255, 255, 255, 0.02)';
+        
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleUpload(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleUpload(e.target.files[0]);
+        }
+    });
+
+    async function handleUpload(file) {
+        // Basic validation
+        if (!file.type.startsWith('video/')) {
+            alert('Please upload a valid video file (.mp4, .mov)');
+            return;
+        }
+
+        // Show uploading state
+        uploadContent.style.display = 'none';
+        uploadProgress.style.display = 'block';
+        percentText.innerText = 'Starting...';
+
+        // Clean filename: remove spaces, lowercase, add timestamp to avoid collisions
+        const cleanName = file.name.replace(/\s+/g, '_').toLowerCase();
+        const fileName = `${Date.now()}_${cleanName}`;
+
+        try {
+            const { data, error } = await supabase.storage
+                .from('raw_footage')
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) throw error;
+
+            // Success
+            percentText.innerText = 'Upload Complete! ✅';
+            setTimeout(() => {
+                uploadContent.style.display = 'block';
+                uploadProgress.style.display = 'none';
+                fetchRawFootage(); // Refresh the list
+            }, 2000);
+
+        } catch (error) {
+            console.error('Upload error:', error);
+            percentText.innerText = 'Upload Failed ❌';
+            setTimeout(() => {
+                uploadContent.style.display = 'block';
+                uploadProgress.style.display = 'none';
+            }, 3000);
+            alert('Failed to upload video: ' + error.message);
+        }
+    }
 }
 
 // Chat Widget Logic
