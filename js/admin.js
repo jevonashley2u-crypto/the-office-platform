@@ -287,23 +287,44 @@ function setupUploadZone() {
             }
         };
 
-        const xhr = new XMLHttpRequest();
-        xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-                const percent = Math.round((e.loaded / e.total) * 100);
+        const uploadUrl = `${SUPABASE_URL}/storage/v1/upload/resumable`;
+
+        const upload = new tus.Upload(file, {
+            endpoint: uploadUrl,
+            retryDelays: [0, 3000, 5000, 10000, 20000],
+            headers: {
+                Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+                apikey: SUPABASE_ANON_KEY,
+                'x-upsert': 'false'
+            },
+            uploadDataDuringCreation: true,
+            removeFingerprintOnSuccess: true,
+            metadata: {
+                bucketName: 'raw_footage',
+                objectName: fileName,
+                contentType: file.type || 'video/mp4',
+                cacheControl: '3600'
+            },
+            chunkSize: 6 * 1024 * 1024, // 6MB chunks
+            onError: function(error) {
+                resetUploadState();
+                console.error("UPLOAD CRASHED:", error);
+                if(errorCard) {
+                    errorCard.style.display = 'block';
+                    document.getElementById('error-reason').innerText = error.message || "Network Error - check console.";
+                }
+            },
+            onProgress: function(bytesUploaded, bytesTotal) {
+                const percent = Math.round((bytesUploaded / bytesTotal) * 100);
                 if(percentText) percentText.innerText = percent + '%';
                 if(fill) fill.style.width = percent + '%';
                 if(btn) btn.innerText = `Uploading... ${percent}%`;
                 console.log("Progress:", percent + "%");
-            }
-        };
-
-        xhr.onload = () => {
-            resetUploadState();
-            if (xhr.status >= 200 && xhr.status < 300) {
+            },
+            onSuccess: function() {
+                resetUploadState();
                 console.log("Upload completed");
-                const data = JSON.parse(xhr.responseText);
-                console.log("Upload response:", data);
+                console.log("Upload response:", { url: upload.url });
 
                 const { data: { publicUrl } } = supabaseClient.storage.from('raw_footage').getPublicUrl(fileName);
                 console.log("File URL:", publicUrl);
@@ -316,32 +337,16 @@ function setupUploadZone() {
                     document.getElementById('success-url').href = publicUrl;
                 }
                 fetchRawFootage();
-            } else {
-                let errObj = {};
-                try { errObj = JSON.parse(xhr.responseText); } catch(e){}
-                console.error("UPLOAD CRASHED:", errObj);
-                if(errorCard) {
-                    errorCard.style.display = 'block';
-                    document.getElementById('error-reason').innerText = errObj.message || `HTTP ${xhr.status} ${xhr.statusText}`;
-                }
             }
-        };
+        });
 
-        xhr.onerror = () => {
-            resetUploadState();
-            console.error("UPLOAD CRASHED: Network Error");
-            if(errorCard) {
-                errorCard.style.display = 'block';
-                document.getElementById('error-reason').innerText = "Network Error - check console.";
+        // Check if there are any previous uploads to continue.
+        upload.findPreviousUploads().then(function (previousUploads) {
+            if (previousUploads.length) {
+                upload.resumeFromPreviousUpload(previousUploads[0]);
             }
-        };
-
-        xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/raw_footage/${fileName}`);
-        xhr.setRequestHeader('Authorization', `Bearer ${SUPABASE_ANON_KEY}`);
-        xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
-        xhr.setRequestHeader('cache-control', '3600');
-        if (file.type) xhr.setRequestHeader('Content-Type', file.type);
-        xhr.send(file);
+            upload.start();
+        });
     }
 }
 

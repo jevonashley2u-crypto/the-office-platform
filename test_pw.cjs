@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 
 (async () => {
-    fs.writeFileSync('dummy.mp4', 'test video file content');
+    fs.writeFileSync('dummy_large.mp4', 'test video file content');
     
     console.log("Launching playwright...");
     const browser = await chromium.launch();
@@ -40,7 +40,7 @@ const fs = require('fs');
     
     console.log("Uploading file...");
     const fileInput = page.locator('#raw-file-input');
-    await fileInput.setInputFiles('dummy.mp4');
+    await fileInput.setInputFiles('dummy_large.mp4');
     
     await page.waitForTimeout(8000);
     
