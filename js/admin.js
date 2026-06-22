@@ -225,9 +225,6 @@ function setupUploadZone() {
             
             // Start the upload asynchronously
             handleUpload(file);
-            
-            // CRITICAL: Reset the input value so the same file can be selected again
-            e.target.value = '';
         }
     });
 
@@ -268,6 +265,10 @@ function setupUploadZone() {
                 uploadProgress.style.display = 'none';
             }, 3000);
             alert('Failed to upload video: ' + error.message);
+        } finally {
+            // Reset the file input so the same file can be selected again
+            const fileInput = document.getElementById('raw-file-input');
+            if (fileInput) fileInput.value = '';
         }
     }
 }

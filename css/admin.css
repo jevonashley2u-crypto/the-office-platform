@@ -241,7 +241,7 @@ body {
 }
 
 .chat-widget.collapsed {
-    height: 52px; /* Just the header */
+    height: 52px !important; /* Just the header */
 }
 
 .chat-header {
