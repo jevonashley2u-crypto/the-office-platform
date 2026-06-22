@@ -283,9 +283,11 @@ function setupUploadZone() {
             if (!ffmpegInstance) {
                 if(progressStatus) progressStatus.innerText = 'Loading Compressor...';
                 const { createFFmpeg, fetchFile } = FFmpeg;
+                console.log("Initializing FFmpeg with single-threaded core-st...");
                 ffmpegInstance = createFFmpeg({
                     log: true,
-                    corePath: 'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js'
+                    corePath: 'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
+                    mainName: 'main'
                 });
                 
                 ffmpegInstance.setProgress(({ ratio }) => {
@@ -296,6 +298,7 @@ function setupUploadZone() {
                 });
                 
                 await ffmpegInstance.load();
+                console.log("FFmpeg core loaded successfully from Unpkg");
             }
 
             if(progressStatus) progressStatus.innerText = 'Compressing...';
