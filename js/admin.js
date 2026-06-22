@@ -217,16 +217,21 @@ function setupUploadZone() {
     fileInput.addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
+            
+            // Force the UI update synchronously
+            uploadContent.style.display = 'none';
+            uploadProgress.style.display = 'block';
+            percentText.innerText = 'Starting upload for: ' + file.name + '...';
+            
+            // Start the upload asynchronously
             handleUpload(file);
+            
+            // CRITICAL: Reset the input value so the same file can be selected again
+            e.target.value = '';
         }
     });
 
     async function handleUpload(file) {
-        // Show uploading state immediately
-        uploadContent.style.display = 'none';
-        uploadProgress.style.display = 'block';
-        percentText.innerText = 'Starting...';
-
         // Basic extension validation instead of MIME type
         const fileNameOriginal = file.name.toLowerCase();
         if (!fileNameOriginal.endsWith('.mp4') && !fileNameOriginal.endsWith('.mov')) {
@@ -276,12 +281,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatSend = document.getElementById("chat-send-btn");
     const chatMessages = document.getElementById("chat-messages");
 
-    function toggleChat() {
+    function toggleChat(e) {
+        if (e) {
+            // Prevent event bubbling if they click the button directly
+            e.stopPropagation();
+        }
         chatWidget.classList.toggle("collapsed");
         chatToggle.innerText = chatWidget.classList.contains("collapsed") ? "▲" : "▼";
     }
 
     chatHeader.addEventListener("click", toggleChat);
+    chatToggle.addEventListener("click", toggleChat);
 
     async function sendMessage() {
         const text = chatInput.value.trim();
