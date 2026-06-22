@@ -67,8 +67,9 @@
                     <span class="badge">storage</span>
                 </div>
                 <div class="card-body">
-                    <div class="upload-zone" id="upload-zone" style="border: none; padding: 1rem; background: transparent;">
-                        <input type="file" id="raw-file-input" accept="video/mp4,video/quicktime" style="display: none;">
+                    <div class="upload-zone" id="upload-zone" style="border: none; padding: 1rem; background: transparent; position: relative;">
+                        <!-- CRITICAL FIX: Safari suppresses change events on display:none file inputs. Must use opacity 0 and absolute positioning instead. -->
+                        <input type="file" id="raw-file-input" accept="video/mp4,video/quicktime" style="opacity: 0; position: absolute; top: 0; left: 0; width: 1px; height: 1px; z-index: -1;">
                         <div class="upload-content" id="upload-content">
                             <label for="raw-file-input" id="upload-btn" style="display: inline-block; box-sizing: border-box; background: var(--accent-primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%; text-align: center;">📤 Upload Video (.mp4, .mov)</label>
                         </div>
@@ -110,6 +111,6 @@
         </div>
     </div>
 
-    <script src="js/admin.js?v=6"></script>
+    <script src="js/admin.js?v=7"></script>
 </body>
 </html>
